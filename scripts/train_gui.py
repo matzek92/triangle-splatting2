@@ -21,6 +21,7 @@ class TrainGUI:
         self.repo_root = Path(__file__).resolve().parents[1]
         self.process: subprocess.Popen | None = None
         self.output_queue: queue.Queue[str] = queue.Queue()
+        self.iteration_cap_warning_shown = False
 
         self.scene_path = tk.StringVar()
         self.model_path = tk.StringVar()
@@ -134,6 +135,7 @@ class TrainGUI:
             return
 
         self.progress.configure(maximum=iterations, value=0)
+        self.iteration_cap_warning_shown = False
         self.status_text.set("Starting training...")
         self._append_log("Starting training process...\n")
         command = self._build_command()
@@ -199,6 +201,12 @@ class TrainGUI:
                     self.progress.configure(maximum=total)
                 self.progress.configure(value=min(current, total))
                 self.status_text.set(f"Training... {current}/{total}")
+            elif total > MAX_REASONABLE_ITERATIONS and not self.iteration_cap_warning_shown:
+                self.iteration_cap_warning_shown = True
+                self._append_log(
+                    f"\nWarning: reported iteration total ({total}) exceeds supported progress "
+                    f"range ({MAX_REASONABLE_ITERATIONS}); using percentage updates only.\n"
+                )
 
         eval_iter_match = EVAL_ITER_PATTERN.search(line)
         if eval_iter_match:
@@ -223,7 +231,18 @@ class TrainGUI:
             return
         self.status_text.set("Stopping training...")
         self._append_log("\nStopping training process...\n")
-        self.process.terminate()
+        self._terminate_process()
+
+    def _terminate_process(self) -> None:
+        if self.process is None:
+            return
+        try:
+            self.process.terminate()
+            self.process.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            self._append_log("Process did not stop gracefully, forcing kill...\n")
+            self.process.kill()
+            self.process.wait(timeout=5)
 
     def _append_log(self, text: str) -> None:
         self.log_text.configure(state="normal")
@@ -234,7 +253,7 @@ class TrainGUI:
     def _on_close(self) -> None:
         if self.process is not None:
             if messagebox.askyesno("Exit", "Training is still running. Stop it and exit?"):
-                self.process.terminate()
+                self._terminate_process()
             else:
                 return
         self.root.destroy()
