@@ -66,6 +66,23 @@ To train our model, you can use the following command:
 python train.py -s <path_to_scenes> -m <output_model_path> --eval
 ```
 
+`<path_to_scenes>` must point to a **single scene folder** in COLMAP format (for example `.../mipnerf360/garden`), with this structure:
+
+```text
+<path_to_scenes>/
+├── sparse/
+│   └── 0/
+│       ├── cameras.bin (or cameras.txt)
+│       ├── images.bin  (or images.txt)
+│       └── points3D.bin / points3D.txt
+├── images/              # default image folder
+├── images_2/            # optional downsampled images
+├── images_4/            # optional downsampled images
+└── normals/             # optional, auto-generated if missing
+```
+
+If you use `-i images_2` or `-i images_4`, the selected folder must exist inside the same scene directory.
+
 If you want to train the model on indoor scenes, you should add the following command:  
 ```bash
 python train.py -s <path_to_scenes> -m <output_model_path> --indoor --eval
@@ -81,6 +98,8 @@ Alternatively, you can run the full evaluation without slurm by using the follow
 ```bash
 python full_eval.py --mipnerf360 <path_to_mipnerf360> --output_path <path_to_save>
 ```
+
+For `--mipnerf360`, use the dataset root that contains one folder per scene (for example `garden`, `bicycle`, `room`, ...), where each scene follows the structure shown above.
 
 ## Rendering
 To render a scene, you can use the following command:
