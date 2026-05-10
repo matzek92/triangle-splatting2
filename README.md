@@ -88,6 +88,13 @@ If you want to train the model on indoor scenes, you should add the following co
 python train.py -s <path_to_scenes> -m <output_model_path> --indoor --eval
 ```
 
+### Simple training GUI
+You can launch a simple desktop GUI with file dialogs and a live progress bar:
+```bash
+python scripts/train_gui.py
+```
+The GUI lets you choose the scene folder, output folder, image folder (`images`, `images_2`, ...), iterations, and `--eval` / `--indoor` options, then starts `train.py` and streams logs.
+
 ## Full evaluation on MipNeRF-360
 To run the full evaluation on MipNeRF-360, you can use the following command:
 ```bash
