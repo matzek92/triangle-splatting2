@@ -188,10 +188,11 @@ class TrainGUI:
     def _update_progress(self, line: str) -> None:
         percent_match = PERCENT_PATTERN.search(line)
         if percent_match:
-            percent = min(max(int(percent_match.group(1)), 0), 100)
-            value = (percent / 100.0) * float(self.progress.cget("maximum"))
-            self.progress.configure(value=value)
-            self.status_text.set(f"Training... {percent}%")
+            percent = int(percent_match.group(1))
+            if 0 <= percent <= 100:
+                value = (percent / 100.0) * float(self.progress.cget("maximum"))
+                self.progress.configure(value=value)
+                self.status_text.set(f"Training... {percent}%")
 
         iter_match = ITER_PATTERN.search(line)
         if iter_match:
@@ -242,7 +243,10 @@ class TrainGUI:
         except subprocess.TimeoutExpired:
             self._append_log("Process did not stop gracefully, forcing kill...\n")
             self.process.kill()
-            self.process.wait(timeout=5)
+            try:
+                self.process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                self._append_log("Warning: process did not exit after kill signal.\n")
 
     def _append_log(self, text: str) -> None:
         self.log_text.configure(state="normal")
