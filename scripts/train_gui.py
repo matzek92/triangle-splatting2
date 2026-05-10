@@ -11,6 +11,7 @@ from tkinter import filedialog, messagebox, ttk
 PERCENT_PATTERN = re.compile(r"(\d{1,3})%\|")
 ITER_PATTERN = re.compile(r"(\d+)\s*/\s*(\d+)")
 EVAL_ITER_PATTERN = re.compile(r"\[ITER\s+(\d+)\]")
+MAX_REASONABLE_ITERATIONS = 10_000_000
 
 
 class TrainGUI:
@@ -193,7 +194,7 @@ class TrainGUI:
         iter_match = ITER_PATTERN.search(line)
         if iter_match:
             current, total = int(iter_match.group(1)), int(iter_match.group(2))
-            if total > 0 and total <= 10_000_000:
+            if total > 0 and total <= MAX_REASONABLE_ITERATIONS:
                 if int(self.progress.cget("maximum")) != total:
                     self.progress.configure(maximum=total)
                 self.progress.configure(value=min(current, total))
